@@ -37,13 +37,11 @@ class MapService: NSObject, MKMapViewDelegate {
                 print("Unable to fetch weather information")
                 return
             }
-            
-            guard let dailyForecast = weatherData.forecast.forecastday.first else { return }
-            
+                        
             let customAnnotation = MapService.MyAnnotation(
                 coordinate: location.coordinate,
                 title: weatherData.current.condition.text,
-                subtitle: "\(weatherData.current.temp_c)C (H:\(dailyForecast.day.maxtemp_c) L:\(dailyForecast.day.mintemp_c))"
+                subtitle: "\(weatherData.current.temp_c)C"
             )
             mapView.addAnnotation(customAnnotation)
         }
@@ -51,8 +49,6 @@ class MapService: NSObject, MKMapViewDelegate {
 
     
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-        
-
         let identifier = "Apple rocks!"
         
         guard let view = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKMarkerAnnotationView else {
@@ -70,18 +66,16 @@ class MapService: NSObject, MKMapViewDelegate {
     
     func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
         
-        print("calloutAccessoryControlTapped called")
-
         guard let detailsViewController = viewController?.storyboard?.instantiateViewController(withIdentifier: "goToDetailViewController") as? DetailsViewController else {
             return
         }
-        print("22222222222")
+
         guard let annotation = view.annotation as? MyAnnotation else {
             return
         }
-        print("333333333333")
+
         detailsViewController.points = "\(annotation.coordinate.latitude), \(annotation.coordinate.longitude)"
-        print("444444444444")
+
         viewController?.present(detailsViewController, animated: true, completion: nil)
     }
     

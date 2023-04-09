@@ -14,57 +14,6 @@ class ViewController: UIViewController, MKMapViewDelegate, SearchDelegate, UITab
     
     private let mapService = MapService()
     
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return locationItems.count
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "firstScreenTable", for: indexPath)
-        let locationItem = locationItems[indexPath.row]
-        
-        var content = cell.defaultContentConfiguration()
-        
-        content.text = locationItem.locationName
-        content.secondaryText = locationItem.temperature
-        
-        cell.contentConfiguration = content
-        
-        return cell
-    }
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let locationItem = locationItems[indexPath.row]
-        let region = MKCoordinateRegion(center: locationItem.coordinate,
-                                        latitudinalMeters: 1000,
-                                        longitudinalMeters: 1000)
-        mapView.setRegion(region, animated: true)
-        
-        let annotation = MapService.MyAnnotation(coordinate: locationItem.coordinate,
-                                                 title: locationItem.locationName,
-                                                 subtitle: locationItem.temperature
-        )
-
-        
-        mapView.delegate = mapService
-        mapView.removeAnnotations(mapView.annotations)
-        mapView.addAnnotation(annotation)
-        
-        tableView.deselectRow(at: indexPath, animated: true)
-    }
-
-    
-    func getWeatherData(_ data: WeatherResponse) {
-        if let forecastDay = data.forecast.forecastday.first {
-            let locationItem = LocationItem(locationName: data.location.name,
-                                            temperature: "\(data.current.temp_c)C (H:\(forecastDay.day.maxtemp_c) L:\(forecastDay.day.mintemp_c))",
-                                            coordinate: CLLocationCoordinate2D(latitude: data.location.lat, longitude: data.location.lon)
-            )
-            locationItems.append(locationItem)
-            weatherTable.reloadData()
-        }
-    }
-    
-    
     @IBOutlet weak var weatherTable: UITableView!
     
     private let locationManager = CLLocationManager()
@@ -80,6 +29,75 @@ class ViewController: UIViewController, MKMapViewDelegate, SearchDelegate, UITab
         weatherTable.delegate = self
         weatherTable.dataSource = self
         weatherTable.register(UITableViewCell.self, forCellReuseIdentifier: "firstScreenTable")
+    }
+    
+    @IBAction func addButton(_ sender: Any) {
+        if let detailsViewController = storyboard?.instantiateViewController(withIdentifier: "goToSearchLocation") as? searchLocationPage {
+            detailsViewController.delegate = self
+            detailsViewController.modalPresentationStyle = .fullScreen
+            present(detailsViewController, animated: true, completion: nil)
+        }
+    }
+    
+    @IBOutlet weak var mapView: MKMapView!
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return locationItems.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "firstScreenTable", for: indexPath)
+        let locationItem = locationItems[indexPath.row]
+        
+        var content = cell.defaultContentConfiguration()
+        
+        content.text = locationItem.locationName
+        content.secondaryText = locationItem.temperature
+        
+        weatherService.getImage(locationItem.weatherImage) { image in
+            DispatchQueue.main.async {
+                content.image = image
+                cell.contentConfiguration = content
+            }
+        }
+        
+        return cell
+    }
+    
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let locationItem = locationItems[indexPath.row]
+        let region = MKCoordinateRegion(center: locationItem.coordinate,
+                                        latitudinalMeters: 1000,
+                                        longitudinalMeters: 1000)
+        mapView.setRegion(region, animated: true)
+        
+        let annotation = MapService.MyAnnotation(coordinate: locationItem.coordinate,
+                                                 title: locationItem.locationName,
+                                                 subtitle: locationItem.temperature
+        )
+        
+        mapView.delegate = mapService
+        mapView.removeAnnotations(mapView.annotations)
+        mapView.addAnnotation(annotation)
+        
+        tableView.deselectRow(at: indexPath, animated: true)
+    }
+    
+    func getWeatherData(_ data: WeatherResponse) {
+        
+        let coordinates = CLLocationCoordinate2D(latitude: data.location.lat, longitude: data.location.lon)
+        
+        if let forecastDay = data.forecast.forecastday.first {
+            let weatherImage = "https:\(data.current.condition.icon)"
+            let locationItem = LocationItem(locationName: data.location.name,
+                                            temperature: "\(data.current.temp_c)C",
+                                            coordinate: coordinates,
+                                            weatherImage: weatherImage
+            )
+            locationItems.append(locationItem)
+            weatherTable.reloadData()
+        }
     }
     
     
@@ -110,16 +128,5 @@ class ViewController: UIViewController, MKMapViewDelegate, SearchDelegate, UITab
             return CLLocation(latitude: 43.0130, longitude: -81.1994)
         }
     }
-    
-    @IBAction func addButton(_ sender: Any) {
-        if let detailsViewController = storyboard?.instantiateViewController(withIdentifier: "goToSearchLocation") as? searchLocationPage {
-            detailsViewController.delegate = self
-            detailsViewController.modalPresentationStyle = .fullScreen
-            present(detailsViewController, animated: true, completion: nil)
-        }
-    }
-    
-    @IBOutlet weak var mapView: MKMapView!
-    
 }
 

@@ -50,6 +50,26 @@ class WeatherService {
         task.resume()
     }
     
+    func getImage(_ urlString: String, completion: @escaping (UIImage?) -> Void) {
+        guard let url = URL(string: urlString) else {
+            completion(nil)
+            return
+        }
+        
+        let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
+            guard let data = data, let image = UIImage(data: data) else {
+                completion(nil)
+                return
+            }
+            
+            DispatchQueue.main.async {
+                completion(image)
+            }
+        }
+        
+        task.resume()
+    }
+    
     private func decodeJson(data: Data) -> WeatherResponse? {
         let decoder = JSONDecoder()
         var weather: WeatherResponse?
@@ -76,16 +96,14 @@ struct Location: Decodable {
 
 struct Weather: Decodable {
     let temp_c: Float
-    let temp_f: Float
-    let is_day: Int
     let condition: Conditions
 }
 
 struct Conditions: Decodable {
-    let code: Int
     let text: String
-    let icon: String
+    let icon: String // Add this line
 }
+
 
 struct Forecast: Decodable {
     let forecastday: [ForecastDay]
@@ -98,9 +116,8 @@ struct ForecastDay: Decodable {
 
 struct Day: Decodable {
     let maxtemp_c: Float
-    let maxtemp_f: Float
     let mintemp_c: Float
-    let mintemp_f: Float
+    let avgtemp_c: Float
     let condition: Conditions
 }
 
@@ -108,4 +125,6 @@ struct LocationItem {
     var locationName: String
     var temperature: String
     var coordinate: CLLocationCoordinate2D
+    var weatherImage: String
 }
+
