@@ -10,7 +10,7 @@ import MapKit
 
 class WeatherService {
     private func createUrl(query: String) -> URL? {
-        guard let url = "https://api.weatherapi.com/v1/forecast.json?key=a4941cc059604772a65205703232103&q=\(query)&days=7&aqi=no&alerts=no"
+        guard let url = "https://api.weatherapi.com/v1/forecast.json?key=0fa41dd0fa424f0da03235656230904&q=\(query)&days=7&aqi=no&alerts=no"
             .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
             return nil
         }
@@ -101,9 +101,8 @@ struct Weather: Decodable {
 
 struct Conditions: Decodable {
     let text: String
-    let icon: String // Add this line
+    let icon: String
 }
-
 
 struct Forecast: Decodable {
     let forecastday: [ForecastDay]

@@ -88,16 +88,15 @@ class ViewController: UIViewController, MKMapViewDelegate, SearchDelegate, UITab
         
         let coordinates = CLLocationCoordinate2D(latitude: data.location.lat, longitude: data.location.lon)
         
-        if let forecastDay = data.forecast.forecastday.first {
-            let weatherImage = "https:\(data.current.condition.icon)"
-            let locationItem = LocationItem(locationName: data.location.name,
-                                            temperature: "\(data.current.temp_c)C",
-                                            coordinate: coordinates,
-                                            weatherImage: weatherImage
-            )
-            locationItems.append(locationItem)
-            weatherTable.reloadData()
-        }
+        let weatherImage = "https:\(data.current.condition.icon)"
+        let locationItem = LocationItem(locationName: data.location.name,
+                                        temperature: "\(data.current.temp_c)C",
+                                        coordinate: coordinates,
+                                        weatherImage: weatherImage
+        )
+        locationItems.append(locationItem)
+        weatherTable.reloadData()
+        
     }
     
     
