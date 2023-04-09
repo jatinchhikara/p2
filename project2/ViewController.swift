@@ -12,6 +12,8 @@ class ViewController: UIViewController, MKMapViewDelegate, SearchDelegate, UITab
     
     var locationItems: [LocationItem] = []
     
+    private let mapService = MapService()
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return locationItems.count
     }
@@ -31,22 +33,25 @@ class ViewController: UIViewController, MKMapViewDelegate, SearchDelegate, UITab
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-            let locationItem = locationItems[indexPath.row]
-            let region = MKCoordinateRegion(center: locationItem.coordinate,
-                                            latitudinalMeters: 1000,
-                                            longitudinalMeters: 1000)
-            mapView.setRegion(region, animated: true)
-            
-            let annotation = MyAnnotation(coordinate: locationItem.coordinate,
-                                          title: locationItem.locationName,
-                                          subtitle: locationItem.temperature
-            )
-            
-            mapView.removeAnnotations(mapView.annotations)
-            mapView.addAnnotation(annotation)
-            
-            tableView.deselectRow(at: indexPath, animated: true)
-        }
+        let locationItem = locationItems[indexPath.row]
+        let region = MKCoordinateRegion(center: locationItem.coordinate,
+                                        latitudinalMeters: 1000,
+                                        longitudinalMeters: 1000)
+        mapView.setRegion(region, animated: true)
+        
+        let annotation = MapService.MyAnnotation(coordinate: locationItem.coordinate,
+                                                 title: locationItem.locationName,
+                                                 subtitle: locationItem.temperature
+        )
+
+        
+        mapView.delegate = mapService
+        mapView.removeAnnotations(mapView.annotations)
+        mapView.addAnnotation(annotation)
+        
+        tableView.deselectRow(at: indexPath, animated: true)
+    }
+
     
     func getWeatherData(_ data: WeatherResponse) {
         if let forecastDay = data.forecast.forecastday.first {
@@ -61,6 +66,7 @@ class ViewController: UIViewController, MKMapViewDelegate, SearchDelegate, UITab
     
     
     @IBOutlet weak var weatherTable: UITableView!
+    
     private let locationManager = CLLocationManager()
     
     private let weatherService = WeatherService()
@@ -68,13 +74,12 @@ class ViewController: UIViewController, MKMapViewDelegate, SearchDelegate, UITab
     override func viewDidLoad() {
         super.viewDidLoad()
         locationManager.requestWhenInUseAuthorization()
-        mapSetup()
-        addAnnotation(location: getCoordinates())
-        
+        mapService.viewController = self
+        mapService.setupMapView(mapView: mapView)
+        mapService.addAnnotation(location: getCoordinates(), weatherService: weatherService, mapView: mapView)
         weatherTable.delegate = self
         weatherTable.dataSource = self
         weatherTable.register(UITableViewCell.self, forCellReuseIdentifier: "firstScreenTable")
-        // Do any additional setup after loading the view.
     }
     
     
@@ -89,7 +94,7 @@ class ViewController: UIViewController, MKMapViewDelegate, SearchDelegate, UITab
             
             guard let dailyForecast = weatherData.forecast.forecastday.first else { return }
             
-            let customAnnotation = MyAnnotation(
+            let customAnnotation = MapService.MyAnnotation(
                 coordinate: location.coordinate,
                 title: weatherData.current.condition.text,
                 subtitle: "\(weatherData.current.temp_c)C (H:\(dailyForecast.day.maxtemp_c) L:\(dailyForecast.day.mintemp_c))"
@@ -98,55 +103,6 @@ class ViewController: UIViewController, MKMapViewDelegate, SearchDelegate, UITab
         }
     }
     
-    
-    private func mapSetup() {
-        mapView.delegate = self
-        
-        guard let location = locationManager.location else {
-            return
-        }
-        
-        let radiusInMetres: CLLocationDistance = 1000
-        
-        let region = MKCoordinateRegion(center: location.coordinate, latitudinalMeters: radiusInMetres, longitudinalMeters: radiusInMetres)
-        
-        mapView.setRegion(region, animated: true)
-        
-        let zoomRange = MKMapView.CameraZoomRange(maxCenterCoordinateDistance: 1000)
-        mapView.setCameraZoomRange(zoomRange, animated: true)
-    }
-    
-    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-        let identifier = "Apple rocks!"
-        
-        guard let view = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKMarkerAnnotationView else {
-            let newView = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: identifier)
-            newView.canShowCallout = true
-            newView.calloutOffset = CGPoint(x: 0, y: 1)
-            let button = UIButton(type: .detailDisclosure)
-            newView.rightCalloutAccessoryView = button
-            return newView
-        }
-        
-        view.annotation = annotation
-        return view
-    }
-
-    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
-        guard let detailsViewController = storyboard?.instantiateViewController(withIdentifier: "goToDetailViewController") as? DetailsViewController else {
-            return
-        }
-        
-        guard let annotation = view.annotation as? MyAnnotation else {
-            return
-        }
-        
-        detailsViewController.points = "\(annotation.coordinate.latitude), \(annotation.coordinate.longitude)"
-        
-        present(detailsViewController, animated: true, completion: nil)
-    }
-
-    
     func getCoordinates() -> CLLocation {
         if let location = locationManager.location {
             return CLLocation(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
@@ -154,7 +110,6 @@ class ViewController: UIViewController, MKMapViewDelegate, SearchDelegate, UITab
             return CLLocation(latitude: 43.0130, longitude: -81.1994)
         }
     }
-    
     
     @IBAction func addButton(_ sender: Any) {
         if let detailsViewController = storyboard?.instantiateViewController(withIdentifier: "goToSearchLocation") as? searchLocationPage {
@@ -166,19 +121,5 @@ class ViewController: UIViewController, MKMapViewDelegate, SearchDelegate, UITab
     
     @IBOutlet weak var mapView: MKMapView!
     
-    class MyAnnotation: NSObject, MKAnnotation {
-        var coordinate: CLLocationCoordinate2D
-        var title: String?
-        var subtitle: String?
-        var glyphText: String?
-        init(coordinate: CLLocationCoordinate2D, title: String, subtitle: String, glyphText: String? = nil) {
-            self.coordinate = coordinate
-            self.title = title
-            self.subtitle = subtitle
-            self.glyphText = glyphText
-            
-            super.init()
-        }
-    }
 }
 
