@@ -8,12 +8,59 @@
 import UIKit
 import MapKit
 
-class ViewController: UIViewController, MKMapViewDelegate, SearchDelegate {
+class ViewController: UIViewController, MKMapViewDelegate, SearchDelegate, UITableViewDelegate, UITableViewDataSource {
+    
+    var locationItems: [LocationItem] = []
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return locationItems.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "firstScreenTable", for: indexPath)
+        let locationItem = locationItems[indexPath.row]
+        
+        var content = cell.defaultContentConfiguration()
+        
+        content.text = locationItem.locationName
+        content.secondaryText = locationItem.temperature
+        
+        cell.contentConfiguration = content
+        
+        return cell
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+            let locationItem = locationItems[indexPath.row]
+            let region = MKCoordinateRegion(center: locationItem.coordinate,
+                                            latitudinalMeters: 1000,
+                                            longitudinalMeters: 1000)
+            mapView.setRegion(region, animated: true)
+            
+            let annotation = MyAnnotation(coordinate: locationItem.coordinate,
+                                          title: locationItem.locationName,
+                                          subtitle: locationItem.temperature
+            )
+            
+            mapView.removeAnnotations(mapView.annotations)
+            mapView.addAnnotation(annotation)
+            
+            tableView.deselectRow(at: indexPath, animated: true)
+        }
+    
     func getWeatherData(_ data: WeatherResponse) {
-        print("I am called", data)
+        if let forecastDay = data.forecast.forecastday.first {
+            let locationItem = LocationItem(locationName: data.location.name,
+                                            temperature: "\(data.current.temp_c)C (H:\(forecastDay.day.maxtemp_c) L:\(forecastDay.day.mintemp_c))",
+                                            coordinate: CLLocationCoordinate2D(latitude: data.location.lat, longitude: data.location.lon)
+            )
+            locationItems.append(locationItem)
+            weatherTable.reloadData()
+        }
     }
     
     
+    @IBOutlet weak var weatherTable: UITableView!
     private let locationManager = CLLocationManager()
     
     private let weatherService = WeatherService()
@@ -22,7 +69,11 @@ class ViewController: UIViewController, MKMapViewDelegate, SearchDelegate {
         super.viewDidLoad()
         locationManager.requestWhenInUseAuthorization()
         mapSetup()
-        addAnnotation(location: getFanshaweLocation())
+        addAnnotation(location: getCoordinates())
+        
+        weatherTable.delegate = self
+        weatherTable.dataSource = self
+        weatherTable.register(UITableViewCell.self, forCellReuseIdentifier: "firstScreenTable")
         // Do any additional setup after loading the view.
     }
     
@@ -67,42 +118,50 @@ class ViewController: UIViewController, MKMapViewDelegate, SearchDelegate {
     
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         let identifier = "Apple rocks!"
-        var view: MKMarkerAnnotationView
         
-        if let dequeuedView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKMarkerAnnotationView {
-            dequeuedView.annotation = annotation
-            view = dequeuedView
-        } else {
-            view = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: identifier)
-            view.canShowCallout = true
-            view.calloutOffset = CGPoint(x: 0, y: 1)
+        guard let view = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKMarkerAnnotationView else {
+            let newView = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: identifier)
+            newView.canShowCallout = true
+            newView.calloutOffset = CGPoint(x: 0, y: 1)
             let button = UIButton(type: .detailDisclosure)
-            button.tag = 10000
-            view.rightCalloutAccessoryView = button
-            view.tintColor = UIColor.black
+            newView.rightCalloutAccessoryView = button
+            return newView
         }
         
+        view.annotation = annotation
         return view
     }
-    
+
     func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
-    }
-    
-    func getFanshaweLocation() -> CLLocation {
-        guard let location = locationManager.location else {
-            return CLLocation(latitude: 43.0130, longitude: -81.1994)
+        guard let detailsViewController = storyboard?.instantiateViewController(withIdentifier: "goToDetailViewController") as? DetailsViewController else {
+            return
         }
         
-        return CLLocation(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
+        guard let annotation = view.annotation as? MyAnnotation else {
+            return
+        }
+        
+        detailsViewController.points = "\(annotation.coordinate.latitude), \(annotation.coordinate.longitude)"
+        
+        present(detailsViewController, animated: true, completion: nil)
+    }
+
+    
+    func getCoordinates() -> CLLocation {
+        if let location = locationManager.location {
+            return CLLocation(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
+        } else {
+            return CLLocation(latitude: 43.0130, longitude: -81.1994)
+        }
     }
     
     
     @IBAction func addButton(_ sender: Any) {
         if let detailsViewController = storyboard?.instantiateViewController(withIdentifier: "goToSearchLocation") as? searchLocationPage {
-                    detailsViewController.delegate = self
-                    detailsViewController.modalPresentationStyle = .fullScreen
-                    present(detailsViewController, animated: true, completion: nil)
-                }
+            detailsViewController.delegate = self
+            detailsViewController.modalPresentationStyle = .fullScreen
+            present(detailsViewController, animated: true, completion: nil)
+        }
     }
     
     @IBOutlet weak var mapView: MKMapView!

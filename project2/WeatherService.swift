@@ -107,4 +107,5 @@ struct Day: Decodable {
 struct LocationItem {
     var locationName: String
     var temperature: String
+    var coordinate: CLLocationCoordinate2D
 }
