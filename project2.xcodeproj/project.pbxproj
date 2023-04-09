@@ -13,6 +13,8 @@
 		AD7A347C29E08E62000E81BE /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AD7A347A29E08E62000E81BE /* Main.storyboard */; };
 		AD7A347E29E08E64000E81BE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AD7A347D29E08E64000E81BE /* Assets.xcassets */; };
 		AD7A348129E08E64000E81BE /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AD7A347F29E08E64000E81BE /* LaunchScreen.storyboard */; };
+		AD7A348929E24583000E81BE /* WeatherService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD7A348829E24583000E81BE /* WeatherService.swift */; };
+		AD7A348B29E24D28000E81BE /* searchLocationPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD7A348A29E24D28000E81BE /* searchLocationPage.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +26,8 @@
 		AD7A347D29E08E64000E81BE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AD7A348029E08E64000E81BE /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		AD7A348229E08E64000E81BE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		AD7A348829E24583000E81BE /* WeatherService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherService.swift; sourceTree = "<group>"; };
+		AD7A348A29E24D28000E81BE /* searchLocationPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = searchLocationPage.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,6 +67,8 @@
 				AD7A347D29E08E64000E81BE /* Assets.xcassets */,
 				AD7A347F29E08E64000E81BE /* LaunchScreen.storyboard */,
 				AD7A348229E08E64000E81BE /* Info.plist */,
+				AD7A348829E24583000E81BE /* WeatherService.swift */,
+				AD7A348A29E24D28000E81BE /* searchLocationPage.swift */,
 			);
 			path = project2;
 			sourceTree = "<group>";
@@ -138,6 +144,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AD7A348929E24583000E81BE /* WeatherService.swift in Sources */,
+				AD7A348B29E24D28000E81BE /* searchLocationPage.swift in Sources */,
 				AD7A347929E08E62000E81BE /* ViewController.swift in Sources */,
 				AD7A347529E08E62000E81BE /* AppDelegate.swift in Sources */,
 				AD7A347729E08E62000E81BE /* SceneDelegate.swift in Sources */,
